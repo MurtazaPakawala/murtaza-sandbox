@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
+
+:root {
+  --bg: #f8f8f8;
+  --bg-image: url('./assets/light_mode.png');
+  --bg-overlay: 0;
+  --text: #141414;
+  --muted: #5c5c5c;
+  --panel: transparent;
+  --accent: #1bb37b;
+  --border: rgba(0, 0, 0, 0.12);
+  --divider: rgba(20, 20, 20, 0.08);
+  --blog-bg: #f8fafc;
+  --blog-bg-dark: #0f141f;
+}
+
+:root[data-theme='dark'] {
+  --bg: #020204;
+  --bg-image: url('./assets/dark_mode.png');
+  --bg-overlay: 0.55;
+  --text: #f6f6f6;
+  --muted: #d7d7d7;
+  --panel: transparent;
+  --accent: #2de38d;
+  --border: rgba(255, 255, 255, 0.4);
+  --divider: rgba(255, 255, 255, 0.18);
+  --blog-bg-dark: #070a0f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Put wallpaper on body only when home is active */
+body:has(.app-shell.is-home) {
+  background-image: var(--bg-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+body:has(.app-shell.is-home)::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--bg-overlay));
+  pointer-events: none;
+  z-index: -1;
+}
+
+body.blog-mode {
+  background-image: none !important;
+  background-attachment: initial !important;
+  background-color: var(--blog-bg);
+}
+
+:root[data-theme='dark'] body.blog-mode {
+  background-color: var(--blog-bg-dark);
+}
+
+:root[data-theme='dark'] .app-shell.is-blog .blog-panel p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.app-shell.is-blog hr {
+  opacity: 0.6;
+}
+
+:root[data-theme='dark'] .app-shell.is-blog hr {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body a {
+  color: inherit;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  gap: 2rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.eyebrow {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.35rem;
+}
+
+.nav-links a,
+.nav-links button {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.95rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.nav-links a:hover,
+.nav-links button:hover {
+  color: var(--accent);
+}
+
+.theme-toggle {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 1rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.panel {
+  padding: 0 0 1.75rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel + .panel {
+  border-top: 1px solid var(--divider);
+  padding-top: 1.75rem;
+}
+
+.blog-panel {
+  padding: 0;
+  max-width: 860px;
+  margin: 0 auto;
+  padding-top: 0.75rem;
+}
+
+.app-shell.is-blog .panel + .panel {
+  border-top: none;
+  padding-top: 1.75rem;
+}
+
+.panel h1,
+.panel h2 {
+  margin: 0 0 0.75rem;
+}
+
+.panel p {
+  color: var(--muted);
+  margin: 0 0 1rem;
+  line-height: 1.6;
+}
+
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.link-row a {
+  text-decoration: none;
+  color: var(--accent);
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid transparent;
+}
+
+.link-row a:hover {
+  border-color: currentColor;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-head span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.list-item {
+  display: block;
+  padding: 0.4rem 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--divider);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  color: var(--accent);
+}
+
+.item-title {
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+  color: var(--text);
+}
+
+.list-item p {
+  margin: 0;
+}
+
+.post {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.post-date {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.text-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  margin-top: auto;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 1.8rem 1rem 2.5rem;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
+.blog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.blog-list-item {
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  color: var(--text);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.blog-list-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.blog-list-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.blog-list-arrow {
+  color: var(--accent);
+}
+
+.blog-list-desc {
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}

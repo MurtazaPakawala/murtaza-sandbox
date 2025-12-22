@@ -1,0 +1,186 @@
+import RegressionDistances from "../components/RegressionDistance.jsx";
+import CovVarSlopeDemo from "../components/CovVarSlopeDemo.jsx";
+
+
+
+# Understanding Univariate Regression
+
+## Introduction
+
+In this blog I want to write about **Univariate Regression**. At core this is a very simple and foundational idea for many machine learning and statistical tasks. I want to work through the derivation, include some visualisation, and focus on what the result is really saying.
+
+## Setup
+
+Let $X$ and $Y$ be two real random variables (not necessarily independent) with two moments and such that
+
+$$
+\operatorname{Var}(X) \neq 0.
+$$
+
+We observe paired samples $(x_1,y_1),\dots,(x_n,y_n)$ and want to approximate $Y$ using a linear function of $X$:
+
+$$
+\hat{y} = a + b x.
+$$
+
+## What does “best fit” mean?
+
+For each data point $x_i$, our model predicts
+
+$$
+\hat{y}_i = a + b x_i,
+$$
+
+and the residual (vertical error) is
+
+$$
+e_i = y_i - \hat{y}_i.
+$$
+
+### Why this distance?
+
+There are many possible distances (vertical, orthogonal, absolute, squared, etc.).
+Try dragging the line and switching the metric:
+
+<div style={{ margin: "16px 0 18px" }}>
+  <RegressionDistances />
+</div>
+
+In ordinary least squares, we use **squared vertical residuals** and minimise their sum:
+
+$$
+S(a,b)
+= \sum_{i=1}^n \big(y_i - (a + b x_i)\big)^2.
+$$
+
+This choice is popular because it’s smooth, gives a clean closed-form solution, and later connects to maximum likelihood under Gaussian noise.
+
+---
+
+## Derivation (population view)
+
+Up to now, we haven’t assumed any *noise distribution* (Gaussian, etc.).  
+Instead, we take a **random variable viewpoint**:
+
+- $X$ and $Y$ are real random variables with finite second moments,
+- we search over all linear predictors $g(x)=a+bx$,
+- and we choose the one that minimises the **mean squared prediction error**.
+
+### The objective: best linear predictor in MSE
+
+Define
+
+$$
+J(a,b)
+:= \mathbb{E}\!\left[(Y-(a+bX))^2\right].
+$$
+
+Minimising $J$ is a purely mechanical optimisation problem: we are choosing the “closest” linear function to $Y$ in the $L^2$ (mean-square) sense.
+
+---
+
+### Step 1: optimise over $a$
+
+Differentiate and set to zero:
+
+$$
+\frac{\partial J}{\partial a}
+= -2\,\mathbb{E}\!\left[Y-(a+bX)\right]=0
+\quad\Longrightarrow\quad
+\mathbb{E}[Y]=a+b\,\mathbb{E}[X].
+$$
+
+So the optimal intercept must satisfy
+
+$$
+a^\star = \mathbb{E}[Y]-b\,\mathbb{E}[X].
+$$
+
+**Interpretation:** the fitted line passes through the “mean point”
+$(\mathbb{E}[X],\mathbb{E}[Y])$.
+
+---
+
+### Step 2: optimise over $b$
+
+Differentiate w.r.t. $b$ and set to zero:
+
+$$
+\frac{\partial J}{\partial b}
+= -2\,\mathbb{E}\!\left[X\,(Y-(a+bX))\right]=0
+\quad\Longrightarrow\quad
+\mathbb{E}[XY]=a\,\mathbb{E}[X]+b\,\mathbb{E}[X^2].
+$$
+
+Substitute $a^\star=\mathbb{E}[Y]-b\,\mathbb{E}[X]$:
+
+$$
+\mathbb{E}[XY]
+= (\mathbb{E}[Y]-b\,\mathbb{E}[X])\mathbb{E}[X]+b\,\mathbb{E}[X^2].
+$$
+
+Rearrange:
+
+$$
+\mathbb{E}[XY]-\mathbb{E}[X]\mathbb{E}[Y]
+= b\left(\mathbb{E}[X^2]-\mathbb{E}[X]^2\right).
+$$
+
+Recognise covariance and variance:
+
+$$
+\operatorname{Cov}(X,Y) = b\,\operatorname{Var}(X).
+$$
+
+So the optimal slope is
+
+$$
+b^\star = \frac{\operatorname{Cov}(X,Y)}{\operatorname{Var}(X)},
+\qquad
+a^\star = \mathbb{E}[Y]-b^\star\mathbb{E}[X].
+$$
+
+
+<div style={{ margin: "16px 0 18px" }}>
+  <CovVarSlopeDemo />
+</div>
+
+---
+
+### Why we need $\operatorname{Var}(X)\neq 0$
+
+If $\operatorname{Var}(X)=0$, then $X$ is constant almost surely.  
+There is no “spread” in $X$, so a slope is not identifiable: many lines give the same predictions on the support of $X$.
+
+That’s why the ratio $\operatorname{Cov}(X,Y)/\operatorname{Var}(X)$ needs a nonzero denominator.
+
+---
+
+## From random variables to data (Monte Carlo + Law of Large Numbers)
+
+In practice, we do not know $\mathbb{E}[X]$, $\mathbb{E}[Y]$, $\operatorname{Cov}(X,Y)$, or $\operatorname{Var}(X)$.  
+We only observe samples $(x_1,y_1),\dots,(x_n,y_n)$, which you can think of as i.i.d. draws from the joint distribution of $(X,Y)$.
+
+The key idea is that expectations can be approximated by sample averages:
+
+$$
+\mathbb{E}[f(X,Y)]
+\approx \frac{1}{n}\sum_{i=1}^n f(x_i,y_i).
+$$
+
+This is exactly the **Monte Carlo principle**, and it is justified by the **Law of Large Numbers**: as $n\to\infty$, the sample average converges to the true expectation (under mild conditions).
+
+So the population objective
+
+$$
+\mathbb{E}\!\left[(Y-(a+bX))^2\right]
+$$
+
+is approximated by the empirical objective
+
+$$
+\frac{1}{n}\sum_{i=1}^n \left(y_i-(a+bx_i)\right)^2,
+$$
+
+which is the usual least-squares loss used in machine learning.
+
