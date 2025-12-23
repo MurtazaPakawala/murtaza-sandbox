@@ -1,0 +1,161 @@
+import GDAVisualizer from "../components/GDAVisualizer.jsx";
+
+# Gaussian Discriminant Analysis (GDA)
+
+Gaussian Discriminant Analysis (GDA) is a generative approach to binary classification. Instead of directly learning a decision boundary, we write down a probabilistic story for how the data $(X,Y)$ could have been generated, fit its parameters from data, and then classify using Bayes’ rule.
+
+## Generative vs discriminative
+
+There are two common ways to build a classifier:
+
+### Generative models (what GDA is)
+
+A generative model specifies the joint distribution $p(x,y)$. In practice, we usually factor it as
+
+$$
+p(x,y) = p(x \mid y)\,p(y).
+$$
+
+Once we have $p(x \mid y)$ and $p(y)$, we can compute the posterior (what we need for classification):
+
+$$
+p(y \mid x) = \frac{p(x \mid y)\,p(y)}{p(x)}.
+$$
+
+### Discriminative models (contrast)
+
+A discriminative model skips the data-generation story and models the posterior directly:
+
+$$
+p(y \mid x).
+$$
+
+Logistic regression is the classic example: it learns a direct mapping from $x$ to the probability of class 1, without explicitly modeling how $x$ itself is distributed inside each class.
+
+## The model (GDA’s assumed data-generating process)
+
+GDA assumes a probabilistic mechanism that could have generated a dataset
+$\{(x^{(i)}, y^{(i)})\}_{i=1}^m$. The assumption is:
+
+1. A label $Y \in \{0,1\}$ is generated first.
+2. A feature vector $X \in \mathbb{R}^d$ is generated conditioned on that label.
+
+Formally, we model the joint distribution as
+
+$$
+p(x,y) = p(x \mid y)\,p(y).
+$$
+
+### Class prior (labels)
+
+We assume the label is Bernoulli:
+
+$$
+Y \sim \text{Bernoulli}(\phi).
+$$
+
+Equivalently,
+
+$$
+p(y) = \phi^y (1-\phi)^{1-y},
+$$
+
+so $\phi = p(y=1)$ and $1-\phi = p(y=0)$.
+
+### Class-conditional features
+
+We assume the features look Gaussian within each class, and both classes share the same covariance matrix $\Sigma$:
+
+$$
+X \mid y=0 \sim \mathcal{N}(\mu_0, \Sigma), \qquad
+X \mid y=1 \sim \mathcal{N}(\mu_1, \Sigma).
+$$
+
+What the parameters mean:
+
+- $\mu_0$: mean feature vector for class 0  
+- $\mu_1$: mean feature vector for class 1  
+- $\Sigma$: shared covariance (spread + correlations across features)
+
+The shared $\Sigma$ assumption is what makes GDA produce a linear decision boundary.
+
+## Fitting the parameters from data (MLE)
+
+Suppose we have labeled training data
+
+$$
+\{(x^{(i)}, y^{(i)})\}_{i=1}^m,\qquad y^{(i)}\in\{0,1\},\ x^{(i)}\in\mathbb{R}^d.
+$$
+
+Since our model assigns a probability to any labeled dataset, we can fit its parameters by maximum likelihood estimation (MLE): choose parameters that make the observed training data most probable under the model.
+
+Collect the parameters as $\theta = (\phi,\mu_0,\mu_1,\Sigma)$. The likelihood is
+
+$$
+L(\theta) \;=\; \prod_{i=1}^m p\big(x^{(i)},y^{(i)};\theta\big)
+\;=\; \prod_{i=1}^m p\big(x^{(i)}\mid y^{(i)};\theta\big)\,p\big(y^{(i)};\theta\big).
+$$
+
+MLE picks
+
+$$
+\hat{\theta} = \arg\max_{\theta} L(\theta)
+\quad\text{(equivalently maximize } \log L(\theta)\text{)}.
+$$
+
+For this particular model (Bernoulli prior + Gaussians with shared covariance, with labels observed), the MLEs have closed-form expressions. The main reason is that the labels tell us exactly which points belong to which class, so the likelihood cleanly separates into a “class-0 Gaussian fit” and a “class-1 Gaussian fit”, plus a simple Bernoulli fit for the label counts. I’m not deriving them here, just using the results (see the references at the end for full derivations).
+
+Define the class counts
+
+$$
+m_1 = \sum_{i=1}^m \mathbf{1}\{y^{(i)}=1\},\qquad
+m_0 = \sum_{i=1}^m \mathbf{1}\{y^{(i)}=0\},\qquad
+m_0+m_1=m.
+$$
+
+Then the fitted parameters are:
+
+$$
+\hat{\phi} = \frac{1}{m}\sum_{i=1}^m y^{(i)}.
+$$
+
+$$
+\hat{\mu}_0 = \frac{1}{m_0}\sum_{i:\,y^{(i)}=0} x^{(i)},
+\qquad
+\hat{\mu}_1 = \frac{1}{m_1}\sum_{i:\,y^{(i)}=1} x^{(i)}.
+$$
+
+$$
+\hat{\Sigma}
+= \frac{1}{m}\sum_{i=1}^m \Big(x^{(i)}-\hat{\mu}_{y^{(i)}}\Big)\Big(x^{(i)}-\hat{\mu}_{y^{(i)}}\Big)^T.
+$$
+
+What are these values saying ??
+
+- $\hat{\phi}$ is just the fraction of training points labeled $1$ (the empirical class prior).
+- $\hat{\mu}_0$ is the average of the feature vectors inside class $0$; $\hat{\mu}_1$ is the same for class $1$.
+- $\hat{\Sigma}$ is a pooled covariance: it measures how features vary around their class mean, averaged across both classes.
+
+Once we have $(\hat{\phi},\hat{\mu}_0,\hat{\mu}_1,\hat{\Sigma})$, we have fully specified $p(y)$ and $p(x\mid y)$, so we can compute $p(y\mid x)$ using Bayes’ rule and classify via
+
+$$
+\hat{y} = \arg\max_{y\in\{0,1\}} p(y\mid x).
+$$
+
+## A quick generative view (sampling)
+
+Even though the main goal is classification, one nice thing about generative models is that they also let you simulate data:
+
+1. Sample a label $y \sim \text{Bernoulli}(\phi)$
+2. Sample features $x \sim \mathcal{N}(\mu_y,\Sigma)$
+
+The visualizer below does exactly that. “Shuffle points” resamples a whole dataset, and the “Add class 0/1 point” buttons sample one extra point from the corresponding class distribution.
+
+A note on the circles: the dashed ellipse around each cluster represents a constant-density contour of the Gaussian for that class (roughly a $2\sigma$ contour). It’s a visual summary of the shared covariance shape and how spread-out the class distribution is around its mean.
+
+<GDAVisualizer />
+
+## References
+
+- CS229 notes (Stanford): https://cs229.stanford.edu/lectures-spring2022/main_notes.pdf  
+- Yuki Shizuya, *A Gentle Introduction to Gaussian Discriminant Analysis: Gaussian Naive Bayes, Linear Discriminant Analysis, and Quadratic Discriminant Analysis*: https://medium.com/p/e54d54f89c5a#533c-2948d83babfc

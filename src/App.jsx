@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import UnivariateRegressionBlog from './blogs/univariate-regression-blog.mdx';
+import GaussianDiscriminativeAnalysisBlog from './blogs/gaussian-discriminative-analysis.mdx';
 
 const socialLinks = [
   { label: 'GitHub', url: 'https://github.com/' },
@@ -12,6 +13,12 @@ const blogPosts = [
     title: 'Understanding Regression',
     // description: '18 December 2025',
     Component: UnivariateRegressionBlog,
+  },
+  {
+    id: 'Gaussian-Discriminative-Analysis',
+    title: 'Gaussian Discriminative Analysis',
+    // description: '18 December 2025',
+    Component: GaussianDiscriminativeAnalysisBlog,
   },
   // {
   //   id: 'multivariate-regression',
