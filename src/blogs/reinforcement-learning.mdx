@@ -1,0 +1,112 @@
+# A shallow dive into Reinforcement Learning
+
+Reinforcement learning is a huge field, and it’s easy to get lost in the breadth of ideas. So in this post I’m going to keep things intentionally focused: we’ll start with the basic formalism (MDPs) and the Bellman equations, move into model-free learning with TD methods (SARSA and Q-learning), and finish with one of the most widely used deep RL baselines—the Deep Q-Network (DQN).
+
+Before we get into it, I want to acknowledge a resource that influenced how I think about RL: Lilian Weng’s blog post, “*A (Long) Peek into Reinforcement Learning*” (2018). It’s exceptionally clear and thorough, and if you want to go deeper than this “shallow dive” 🤿, I genuinely recommend reading it (and her other posts too).
+
+So what is reinforcement learning, in plain terms? The way I think about it is: instead of learning from a static dataset like in supervised learning, RL is about learning by doing. You have an agent that interacts with an environment—it takes an action, gets some feedback (a reward), and sees how the world changes. The tricky part is that the feedback can be delayed: an action might look helpful right now, but only pay off (or backfire) several steps later. That “long-term credit assignment” is what makes RL feel different from a lot of standard ML.
+
+And this is exactly why RL sits nicely in the broader ML toolbox. If supervised learning is mostly about prediction and pattern recognition, RL is about decision-making over time. It shows up naturally in settings like games, robotics, and other control problems—anywhere you’re not just trying to predict what happens next, but trying to choose actions that steer the future in your favor.
+
+
+
+## Markov Decision Processes (MDPs)
+
+To talk about reinforcement learning precisely, we usually wrap the problem in a Markov Decision Process (MDP). The reason is simple: it gives us a clean mathematical model for “an agent repeatedly makes decisions, the world responds, and rewards show up along the way.”
+
+An MDP is typically written as:
+
+$$
+(\mathcal{S}, \mathcal{A}, P, R, \gamma)
+$$
+
+- $\mathcal{S}$: the set of states
+- $\mathcal{A}$: the set of actions
+- $P(s_{\text{next}} \mid s,a)$: transition dynamics (probability of landing in the next state)
+- $R(s,a)$: the reward function
+- $\gamma \in [0,1)$: the discount factor (how much we care about future rewards)
+
+### The Markov assumption
+
+The key assumption is the Markov property: once you know the current state, the future doesn’t depend on the full history.
+
+$$
+P(s_{t+1}\mid s_t, a_t, s_{t-1}, a_{t-1}, \ldots) = P(s_{t+1}\mid s_t, a_t)
+$$
+
+Informally: the current state $s_t$ is a sufficient summary of the past.
+
+
+## Policies: how the agent behaves
+
+A policy is just the agent’s behavior rule. It tells you what action to take in each state.
+
+- Deterministic: $\pi(s) = a$
+- Stochastic: $\pi(a \mid s)$ (a distribution over actions)
+
+When we say “the agent is learning,” we usually mean it’s improving its policy.
+
+
+## Returns and value functions
+
+To define “better,” we need a notion of long-term reward. Starting at time $t$, the return is:
+
+$$
+G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \cdots
+$$
+
+Now we can define value functions, which measure how good states (or state-action pairs) are under a policy.
+
+### State-value function
+
+$$
+V^\pi(s) = \mathbb{E}_\pi\left[ G_t \mid s_t = s \right]
+$$
+
+Interpretation: if I start in state $s$ and follow policy $\pi$, what return should I expect?
+
+### Action-value function
+
+$$
+Q^\pi(s,a) = \mathbb{E}_\pi\left[ G_t \mid s_t = s, a_t = a \right]
+$$
+
+Interpretation: if I start in $s$, take action $a$ now, and then follow $\pi$, what return should I expect?
+
+
+## The Bellman equation (the core idea)
+
+The value of a state can be written recursively: it’s the immediate reward plus the discounted value of the next state (in expectation). This is the Bellman expectation equation for $V^\pi$:
+
+$$
+V^\pi(s)
+=
+\sum_{a \in \mathcal{A}} \pi(a \mid s)
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left( R(s,a,s_{\text{next}}) + \gamma V^\pi(s_{\text{next}}) \right)
+$$
+## Bellman optimality (where control begins)
+
+If we want the best possible behavior, we define the **optimal** value functions:
+
+$$
+V^*(s) = \max_\pi V^\pi(s)
+\qquad
+\text{and}
+\qquad
+Q^*(s,a) = \max_\pi Q^\pi(s,a)
+$$
+
+They satisfy the **Bellman optimality equations**:
+
+$$
+V^*(s) = \max_{a \in \mathcal{A}}
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left(R(s,a,s_{\text{next}}) + \gamma V^*(s_{\text{next}})\right)
+$$
+
+$$
+Q^*(s,a) =
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left(R(s,a,s_{\text{next}}) + \gamma \max_{a' \in \mathcal{A}} Q^*(s_{\text{next}},a')\right)
+$$

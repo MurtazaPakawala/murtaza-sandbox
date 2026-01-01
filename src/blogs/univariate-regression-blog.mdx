@@ -55,9 +55,8 @@ $$
 
 This choice is popular because it’s smooth, gives a clean closed-form solution, and later connects to maximum likelihood under Gaussian noise.
 
----
 
-## Derivation (population view)
+## Derivation 
 
 Up to now, we haven’t assumed any *noise distribution* (Gaussian, etc.).  
 Instead, we take a **random variable viewpoint**:
@@ -77,7 +76,6 @@ $$
 
 Minimising $J$ is a purely mechanical optimisation problem: we are choosing the “closest” linear function to $Y$ in the $L^2$ (mean-square) sense.
 
----
 
 ### Step 1: optimise over $a$
 
@@ -99,7 +97,6 @@ $$
 **Interpretation:** the fitted line passes through the “mean point”
 $(\mathbb{E}[X],\mathbb{E}[Y])$.
 
----
 
 ### Step 2: optimise over $b$
 
@@ -145,7 +142,6 @@ $$
   <CovVarSlopeDemo />
 </div>
 
----
 
 ### Why we need $\operatorname{Var}(X)\neq 0$
 
@@ -154,7 +150,6 @@ There is no “spread” in $X$, so a slope is not identifiable: many lines give
 
 That’s why the ratio $\operatorname{Cov}(X,Y)/\operatorname{Var}(X)$ needs a nonzero denominator.
 
----
 
 ## From random variables to data (Monte Carlo + Law of Large Numbers)
 

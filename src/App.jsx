@@ -1,38 +1,30 @@
 import { useEffect, useState } from 'react';
 import UnivariateRegressionBlog from './blogs/univariate-regression-blog.mdx';
 import GaussianDiscriminativeAnalysisBlog from './blogs/gaussian-discriminative-analysis.mdx';
-
-const socialLinks = [
-  { label: 'GitHub', url: 'https://github.com/' },
-  { label: 'Resume', url: '#', external: true },
-];
+import ReinforcementLearningBlog from './blogs/reinforcement-learning.mdx';
+import githubMarkDark from './assets/github-mark-dark.svg';
+import githubMarkLight from './assets/github-mark-light.svg';
+import resumePdf from './files/murtaza_resume.pdf';
 
 const blogPosts = [
   {
     id: 'Linear-Regression',
     title: 'Understanding Regression',
-    // description: '18 December 2025',
+    description: '14 December 2025',
     Component: UnivariateRegressionBlog,
   },
   {
     id: 'Gaussian-Discriminative-Analysis',
     title: 'Gaussian Discriminative Analysis',
-    // description: '18 December 2025',
+    description: '18 December 2025',
     Component: GaussianDiscriminativeAnalysisBlog,
   },
-  // {
-  //   id: 'multivariate-regression',
-  //   title: 'Multivariate Regression',
-  //   description: 'Matrix view, normal equations, and interpretation of \u03b2.',
-  //   Component: MultivariateRegressionBlog,
-  // },
-  // {
-  //   id: 'bayesian-stats',
-  //   title: 'Bayesian Statistics',
-  //   description:
-  //     'Priors, posteriors, conjugacy, and intuition for uncertainty.',
-  //   Component: BayesianStatsBlog,
-  // },
+  {
+    id: 'Reinforcement-Learning',
+    title: 'A shallow dive into Reinforcement Learning',
+    description: '30 December 2025',
+    Component: ReinforcementLearningBlog,
+  },
 ];
 
 const getPreferredTheme = () => {
@@ -48,6 +40,15 @@ export default function App() {
   const [theme, setTheme] = useState(getPreferredTheme);
   const [view, setView] = useState('home');
   const [activePostId, setActivePostId] = useState(blogPosts[0].id);
+  const githubIcon = theme === 'dark' ? githubMarkLight : githubMarkDark;
+  const socialLinks = [
+    {
+      label: 'GitHub',
+      url: 'https://github.com/MurtazaPakawala',
+      icon: githubIcon,
+    },
+    { label: 'Resume', url: resumePdf, external: true },
+  ];
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -142,6 +143,14 @@ export default function App() {
                     target='_blank'
                     rel='noreferrer'
                   >
+                    {link.icon ? (
+                      <img
+                        src={link.icon}
+                        alt=''
+                        className='link-icon'
+                        aria-hidden='true'
+                      />
+                    ) : null}
                     {link.label}
                   </a>
                 ))}
