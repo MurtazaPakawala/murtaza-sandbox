@@ -85,7 +85,6 @@ V^\pi(s)
 \sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
 \left( R(s,a,s_{\text{next}}) + \gamma V^\pi(s_{\text{next}}) \right)
 $$
-## Bellman optimality (where control begins)
 
 If we want the best possible behavior, we define the **optimal** value functions:
 
@@ -110,3 +109,7 @@ Q^*(s,a) =
 \sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
 \left(R(s,a,s_{\text{next}}) + \gamma \max_{a' \in \mathcal{A}} Q^*(s_{\text{next}},a')\right)
 $$
+
+
+
+(Working on this......)

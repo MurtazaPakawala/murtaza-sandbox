@@ -202,6 +202,41 @@ body a {
   display: inline-block;
 }
 
+.projects-list .blog-list-item {
+  border-color: var(--divider);
+}
+
+.project-card {
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+}
+
+.project-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.project-link {
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+.project-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.project-icon-link:hover {
+  border-color: var(--accent);
+}
+
 .section-head {
   display: flex;
   justify-content: space-between;
@@ -240,6 +275,9 @@ body a {
 }
 
 .item-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-weight: 600;
   margin: 0 0 0.2rem;
   color: var(--text);

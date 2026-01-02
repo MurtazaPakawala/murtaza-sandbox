@@ -5,6 +5,7 @@ import ReinforcementLearningBlog from './blogs/reinforcement-learning.mdx';
 import githubMarkDark from './assets/github-mark-dark.svg';
 import githubMarkLight from './assets/github-mark-light.svg';
 import resumePdf from './files/murtaza_resume.pdf';
+import thesisPdf from './files/thesis.pdf';
 
 const blogPosts = [
   {
@@ -48,6 +49,28 @@ export default function App() {
       icon: githubIcon,
     },
     { label: 'Resume', url: resumePdf, external: true },
+  ];
+  const projects = [
+    {
+      title: 'Research Thesis',
+      description: 'Inferring Evolutionary Parameters from Phylogenies.',
+      url: thesisPdf,
+      clickUrl: thesisPdf,
+    },
+    {
+      title: 'C++ Neural Network from Scratch',
+      url: 'https://github.com/MurtazaPakawala/CPP-ANN',
+      githubUrl: 'https://github.com/MurtazaPakawala/CPP-ANN',
+      icon: githubIcon,
+      clickUrl: 'https://github.com/MurtazaPakawala/CPP-ANN',
+    },
+    {
+      title: 'Course Tracker',
+      url: 'https://github.com/JoshSkim/csesoc-competiton',
+      githubUrl: 'https://github.com/JoshSkim/csesoc-competiton',
+      icon: githubIcon,
+      clickUrl: 'https://github.com/JoshSkim/csesoc-competiton',
+    },
   ];
 
   useEffect(() => {
@@ -160,6 +183,59 @@ export default function App() {
             <section id='projects' className='panel'>
               <div className='section-head'>
                 <h2>Projects</h2>
+              </div>
+              <div className='blog-list projects-list'>
+                {projects.map((project) => (
+                  <div
+                    key={project.title}
+                    className='blog-list-item project-card'
+                    role={project.clickUrl ? 'link' : undefined}
+                    tabIndex={project.clickUrl ? 0 : undefined}
+                    onClick={() => {
+                      if (!project.clickUrl) return;
+                      window.open(project.clickUrl, '_blank', 'noreferrer');
+                    }}
+                    onKeyDown={(event) => {
+                      if (!project.clickUrl) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        window.open(project.clickUrl, '_blank', 'noreferrer');
+                      }
+                    }}
+                  >
+                    <div className='project-row'>
+                      <a
+                        className='project-link'
+                        href={project.url}
+                        target='_blank'
+                        rel='noreferrer'
+                      >
+                        <div className='blog-list-title'>{project.title}</div>
+                        {project.description ? (
+                          <div className='blog-list-desc'>
+                            {project.description}
+                          </div>
+                        ) : null}
+                      </a>
+                      {project.githubUrl ? (
+                        <a
+                          className='project-icon-link'
+                          href={project.githubUrl}
+                          target='_blank'
+                          rel='noreferrer'
+                          aria-label={`${project.title} GitHub`}
+                        >
+                          <img
+                            src={project.icon}
+                            alt=''
+                            className='link-icon'
+                            aria-hidden='true'
+                          />
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
               </div>
             </section>
 
