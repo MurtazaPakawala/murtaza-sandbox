@@ -151,7 +151,7 @@ export default function App() {
             <section id='about' className='panel'>
               <h1>About Me</h1>
               <p>
-                Hi, I&apos;m Murtaza — a final-year Computer Science (Honours)
+                Hi, I&apos;m Murtaza, a final-year Computer Science (Honours)
                 undergraduate student at UNSW Sydney. I enjoy learning about
                 machine learning and maths, and I love building projects.
                 Outside of study, I like travelling, reading, and playing
