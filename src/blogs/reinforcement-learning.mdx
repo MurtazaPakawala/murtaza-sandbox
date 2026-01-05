@@ -4,11 +4,8 @@ Reinforcement learning is a huge field, and it’s easy to get lost in the bread
 
 Before we get into it, I want to acknowledge a resource that influenced how I think about RL: Lilian Weng’s blog post, “*A (Long) Peek into Reinforcement Learning*” (2018). It’s exceptionally clear and thorough, and if you want to go deeper than this “shallow dive” 🤿, I genuinely recommend reading it (and her other posts too).
 
-So what is reinforcement learning, in plain terms? The way I think about it is: instead of learning from a static dataset like in supervised learning, RL is about learning by doing. You have an agent that interacts with an environment—it takes an action, gets some feedback (a reward), and sees how the world changes. The tricky part is that the feedback can be delayed: an action might look helpful right now, but only pay off (or backfire) several steps later. That “long-term credit assignment” is what makes RL feel different from a lot of standard ML.
-
-And this is exactly why RL sits nicely in the broader ML toolbox. If supervised learning is mostly about prediction and pattern recognition, RL is about decision-making over time. It shows up naturally in settings like games, robotics, and other control problems—anywhere you’re not just trying to predict what happens next, but trying to choose actions that steer the future in your favor.
-
-
+So what is reinforcement learning, in plain terms? The way I think about it is: instead of learning from a static dataset like in supervised learning, RL is about learning by doing. You have an agent that interacts with an environment—it takes an action, gets some feedback (a reward), and sees how the world changes.
+And this is exactly why RL sits nicely in the broader ML toolbox. If supervised learning is mostly about prediction and pattern recognition, RL is about decision-making over time. It shows up naturally in settings like games, robotics, and other control problems.
 
 ## Markov Decision Processes (MDPs)
 
@@ -111,5 +108,79 @@ Q^*(s,a) =
 $$
 
 
+## how RL algorithms differ
 
-(Working on this......)
+At a high level, most RL methods are trying to answer the same question: *how do I choose actions to maximize long-term reward?* The differences mostly come from what information we assume we have access to, and what we’re trying to learn.
+
+A useful first split is:
+
+- Do we know the environment dynamics? i.e., do we know $P(s_{\text{next}} \mid s,a)$ and $R(s,a)$?
+- If not, can we still learn purely from experience?
+
+There’s one more distinction that shows up a lot once we start learning from data:
+
+- On-policy vs off-policy
+  - On-policy methods learn the value of (and improve) the same policy they use to collect data.  
+    Intuition: “I learn from what I actually do.”
+  - Off-policy methods learn about a *different* target policy while behaving according to another policy (often more exploratory).  
+    Intuition: “I can explore with one policy, but learn the greedy/optimal one in the background.”
+
+### 1) Known model: Dynamic Programming
+
+If we know the environment model (the transition probabilities and reward function), then we can **plan** directly. In that setting we don’t have to “guess” what happens after an action—we can compute the expectation exactly using $P(s_{\text{next}} \mid s,a)$ and $R(s,a)$.
+
+DP methods are built straight from the Bellman equations and work by repeatedly applying **Bellman backups** until the values (and policy) stabilize.
+
+At a high level, there are two classic DP algorithms:
+
+#### Policy Iteration 
+
+Policy iteration the idea is simple if I can evaluate a policy, I can make it better by acting greedily with respect to its value function.
+
+It repeats two steps:
+
+**1) Policy evaluation**: given a fixed policy $\pi$, compute $V^\pi$. The Bellman equation is:
+
+$$
+V^\pi(s)
+=
+\sum_{a \in \mathcal{A}} \pi(a \mid s)
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left( R(s,a,s_{\text{next}}) + \gamma V^\pi(s_{\text{next}}) \right)
+$$
+
+In practice, we approximate this by iterating until the value function stops changing much (because solving it exactly can be expensive but can be solved as linear equations).
+
+**2) Policy improvement**: update the policy to be greedy with respect to the current values:
+
+$$
+\pi_{\text{new}}(s) =
+\arg\max_{a \in \mathcal{A}}
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left( R(s,a,s_{\text{next}}) + \gamma V^\pi(s_{\text{next}}) \right)
+$$
+
+#### Value Iteration
+
+In the value iteration we computes the optimal value function directly, without explicitly keeping a separate “current policy” during learning. Instead of evaluating a fixed policy $\pi$, it repeatedly applies the Bellman optimality backup to push $V$ toward $V^*$.
+
+The key update is:
+
+$$
+V(s) \leftarrow
+\max_{a \in \mathcal{A}}
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left( R(s,a,s_{\text{next}}) + \gamma V(s_{\text{next}}) \right)
+$$
+
+Here’s the intuition I like to keep in mind: for each state $s$, value iteration looks one step ahead, it considers every possible action, averages over the possible next states using the known transition model, and picks the action that gives the best “immediate reward + discounted future value.” Repeating this update over and over makes the value function converge.
+Once $V$ is close to $V^*$, we can recover an optimal policy by acting greedily with respect to the learned values:
+
+$$
+\pi^*(s) =
+\arg\max_{a \in \mathcal{A}}
+\sum_{s_{\text{next}} \in \mathcal{S}} P(s_{\text{next}} \mid s,a)
+\left( R(s,a,s_{\text{next}}) + \gamma V(s_{\text{next}}) \right)
+$$
+
+Compared to policy iteration, value iteration usually does *less work per iteration* (since there’s no full policy evaluation loop), but it may need more iterations overall. Conceptually, both are just different ways of applying Bellman backups until things stabilize. The key difference I had to remember—since this is what confused me at first—is that in policy iteration the value function is explicitly the value of the current policy, $V^\pi$, whereas in value iteration we update values directly toward $V^*$ without committing to evaluating any particular policy along the way (we can extract a greedy policy when we want, typically at the end).
