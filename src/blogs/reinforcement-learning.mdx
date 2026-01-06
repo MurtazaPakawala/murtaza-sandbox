@@ -116,15 +116,10 @@ A useful first split is:
 - Do we know the environment dynamics? i.e., do we know $P(s_{\text{next}} \mid s,a)$ and $R(s,a)$?
 - If not, can we still learn purely from experience?
 
-There’s one more distinction that shows up a lot once we start learning from data:
+There’s one more distinction that we will discuss when we go through the TD learning methods below!
 
-- On-policy vs off-policy
-  - On-policy methods learn the value of (and improve) the same policy they use to collect data.  
-    Intuition: “I learn from what I actually do.”
-  - Off-policy methods learn about a *different* target policy while behaving according to another policy (often more exploratory).  
-    Intuition: “I can explore with one policy, but learn the greedy/optimal one in the background.”
 
-### 1) Known model: Dynamic Programming
+### 1) Dynamic Programming (Known model)
 
 If we know the environment model (the transition probabilities and reward function), then we can **plan** directly. In that setting we don’t have to “guess” what happens after an action—we can compute the expectation exactly using $P(s_{\text{next}} \mid s,a)$ and $R(s,a)$.
 
@@ -183,3 +178,109 @@ $$
 $$
 
 Compared to policy iteration, value iteration usually does *less work per iteration* (since there’s no full policy evaluation loop), but it may need more iterations overall. Conceptually, both are just different ways of applying Bellman backups until things stabilize. The key difference I had to remember—since this is what confused me at first—is that in policy iteration the value function is explicitly the value of the current policy, $V^\pi$, whereas in value iteration we update values directly toward $V^*$ without committing to evaluating any particular policy along the way (we can extract a greedy policy when we want, typically at the end).
+
+### 2) Monte Carlo methods
+
+Once we drop the “known model” assumption, we can’t compute Bellman expectations exactly because we don’t know $P(s_{\text{next}} \mid s,a)$. A simple idea is that we don’t model the environment at all just run a policy, collect complete episodes, and average what actually happened.
+so if I visit a state $s$ many times while following a policy $\pi$, I can estimate its value by averaging the returns I observe after visiting it:
+
+$$
+V^\pi(s) \approx \frac{1}{N(s)} \sum_{i=1}^{N(s)} G^{(i)}(s)
+$$
+
+Here:
+- $G^{(i)}(s)$ is the return observed after the $i$-th visit to $s$ (in some episode),
+- $N(s)$ is the number of times we’ve visited $s$.
+
+Similarly, for action-values:
+
+$$
+Q^\pi(s,a) \approx \frac{1}{N(s,a)} \sum_{i=1}^{N(s,a)} G^{(i)}(s,a)
+$$
+
+For an episode, the return from time $t$ is:
+
+$$
+G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \cdots
+$$
+
+Monte Carlo methods wait until the episode finishes so they can compute these returns exactly from the sampled rewards.
+
+There are two common variants:
+
+- **First-visit MC**: only update from the first time a state appears in an episode.
+- **Every-visit MC**: update from every occurrence of the state within the episode.
+
+To move from *evaluating* a fixed policy to actually finding an **optimal policy**, Monte Carlo methods can be used in a control loop:
+
+1) generate episodes using an exploratory policy (often $\epsilon$-greedy, meaning we choose the current best action with probability $1-\epsilon$ and a random action with probability $\epsilon$),  
+2) estimate $Q(s,a)$ from the observed returns,  
+3) update the policy to be greedier with respect to the new $Q$ estimates.
+
+This should feel very similar to the Policy Iteration story from above DP section, Policy iteration alternates between policy evaluation and policy improvement using the known model ($P$ and $R$). MC control follows the same high-level template, except the “evaluation” step is done from sampled episodes, so we can improve policies even when the dynamics are unknown.
+
+### 3) Temporal-Difference (TD) learning
+
+Monte Carlo methods are simple and model-free, but they come with a practical drawback: to compute returns $G_t$, you usually have to wait until the episode ends. For long episodes (or environments that don’t really end), this become a big problem.
+Temporal-Difference (TD) learning keeps the model-free setup, but updates online using a one-step lookahead. The core idea is to update value estimates using a **bootstrap target** (bootstrapping means we build the update target using an existing estimate like $V(s_{t+1})$ or $Q(s_{t+1},a)$, so we can learn without needing to see the entire future trajectory which is what we do in MC we saw above):
+
+
+$$
+\text{target} = r_t + \gamma V(s_{t+1})
+$$
+
+So the TD update for a state-value function looks like:
+
+$$
+V(s_t) \leftarrow V(s_t) + \alpha \left( r_t + \gamma V(s_{t+1}) - V(s_t) \right)
+$$
+
+The term inside parentheses is the **TD error**:
+
+$$
+\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
+$$
+
+For control, it’s often more convenient to learn an action-value function $Q(s,a)$ directly, because then we can act greedily:
+
+$$
+\pi(s) = \arg\max_{a \in \mathcal{A}} Q(s,a)
+$$
+
+Earlier I mentioned there’s another distinction that becomes important once we start learning from experience. This is that split:
+
+- **On-policy** methods learn about the same policy they use to generate data.  
+  In other words, the agent is learning the value of the behavior it is actually following (including any exploration it’s doing).
+
+- **Off-policy** methods learn about a different target policy while collecting data using a separate behavior policy (often more exploratory).  
+  The intuition I like is: you can behave one way to gather experience (explore), but learn about another policy in the background (the greedy/optimal one).
+
+With that in mind, **SARSA** is the classic on-policy TD control method, while **Q-learning** is the classic off-policy one.
+
+
+#### SARSA (on-policy)
+
+SARSA learns the value of the policy it is actually following. The name comes from the tuple it uses in the update:
+$(s_t, a_t, r_t, s_{t+1}, a_{t+1})$.
+
+The SARSA update is:
+
+$$
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha \left( r_t + \gamma Q(s_{t+1},a_{t+1}) - Q(s_t,a_t) \right)
+$$
+
+Key idea: the bootstrapped term uses $Q(s_{t+1}, a_{t+1})$, where $a_{t+1}$ is sampled from the same behavior policy (often $\epsilon$-greedy). So SARSA learns the value of behaving with exploration included.
+
+
+#### Q-learning (off-policy)
+
+Q-learning learns the greedy optimal action-value function, even if the data was collected using an exploratory behavior policy.
+
+Its update is:
+
+$$
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha \left( r_t + \gamma \max_{a' \in \mathcal{A}} Q(s_{t+1},a') - Q(s_t,a_t) \right)
+$$
+
+Key idea: instead of using the next action actually taken, Q-learning uses the best next action according to the current $Q$ estimate. That $\max$ is what makes it off-policy it learns about the greedy target policy regardless of how the experience was generated.
+
