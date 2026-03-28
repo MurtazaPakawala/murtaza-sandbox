@@ -40,15 +40,15 @@ body {
   position: relative;
 }
 
-/* Put wallpaper on body only when home is active */
-body:has(.app-shell.is-home) {
+/* Wallpaper on all pages except blog/project reading view */
+body:not(.blog-mode) {
   background-image: var(--bg-image);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
 
-body:has(.app-shell.is-home)::before {
+body:not(.blog-mode)::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -126,7 +126,8 @@ body a {
 }
 
 .nav-links a:hover,
-.nav-links button:hover {
+.nav-links button:hover,
+.nav-links button.active {
   color: var(--accent);
 }
 

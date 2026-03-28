@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import UnivariateRegressionBlog from './blogs/univariate-regression-blog.mdx';
 import GaussianDiscriminativeAnalysisBlog from './blogs/gaussian-discriminative-analysis.mdx';
 import ReinforcementLearningBlog from './blogs/reinforcement-learning.mdx';
+import HalfCheetahRL from './project/halfcheetah-rl.mdx';
 import githubMarkDark from './assets/github-mark-dark.svg';
 import githubMarkLight from './assets/github-mark-light.svg';
 import resumePdf from './files/murtaza_resume.pdf';
@@ -23,7 +24,7 @@ const blogPosts = [
   {
     id: 'Reinforcement-Learning',
     title: 'A shallow dive into Reinforcement Learning',
-    description: '30 December 2025',
+    description: '6 January 2026',
     Component: ReinforcementLearningBlog,
   },
 ];
@@ -41,6 +42,7 @@ export default function App() {
   const [theme, setTheme] = useState(getPreferredTheme);
   const [view, setView] = useState('home');
   const [activePostId, setActivePostId] = useState(blogPosts[0].id);
+  const [activeProjectId, setActiveProjectId] = useState(null);
   const githubIcon = theme === 'dark' ? githubMarkLight : githubMarkDark;
   const socialLinks = [
     {
@@ -52,26 +54,20 @@ export default function App() {
   ];
   const projects = [
     {
+      id: 'HalfCheetah-RL',
+      title: 'Making HalfCheetah Run',
+      description: 'Looking at different variations of RL methods.',
+      Component: HalfCheetahRL,
+    },
+    {
       title: 'Research Thesis',
       description: 'Inferring Evolutionary Parameters from Phylogenies.',
       url: thesisPdf,
       clickUrl: thesisPdf,
     },
-    {
-      title: 'C++ Neural Network from Scratch',
-      url: 'https://github.com/MurtazaPakawala/CPP-ANN',
-      githubUrl: 'https://github.com/MurtazaPakawala/CPP-ANN',
-      icon: githubIcon,
-      clickUrl: 'https://github.com/MurtazaPakawala/CPP-ANN',
-    },
-    {
-      title: 'Course Tracker',
-      url: 'https://github.com/JoshSkim/csesoc-competiton',
-      githubUrl: 'https://github.com/JoshSkim/csesoc-competiton',
-      icon: githubIcon,
-      clickUrl: 'https://github.com/JoshSkim/csesoc-competiton',
-    },
   ];
+
+  const isReading = view === 'blog-post' || view === 'project-post';
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -80,45 +76,54 @@ export default function App() {
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    document.body.classList.toggle('blog-mode', view === 'blog');
-  }, [view]);
+    document.body.classList.toggle('blog-mode', isReading);
+  }, [isReading]);
 
   const toggleTheme = () =>
     setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
 
-  const goHomeAndScroll = (sectionId) => {
-    setView('home');
-    if (!sectionId || typeof window === 'undefined') return;
-    window.requestAnimationFrame(() => {
-      const section = document.getElementById(sectionId);
-      section?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  };
-
-  const openPost = (postId) => {
-    setActivePostId(postId);
-    setView('blog');
+  const navigate = (target) => {
+    setView(target);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
+  const openPost = (postId) => {
+    setActivePostId(postId);
+    navigate('blog-post');
+  };
+
+  const openProject = (projectId) => {
+    setActiveProjectId(projectId);
+    navigate('project-post');
+  };
+
   const activePost =
     blogPosts.find((post) => post.id === activePostId) ?? blogPosts[0];
+  const activeProject = projects.find((p) => p.id === activeProjectId);
+
+  const shellClass = isReading ? 'is-blog' : 'is-home';
 
   return (
-    <div className={`app-shell ${view === 'home' ? 'is-home' : 'is-blog'}`}>
+    <div className={`app-shell ${shellClass}`}>
       <header className='hero'>
         <div>
-          <p className='eyebrow'>Murtaza&apos;s Sandbox</p>
+          <p
+            className='eyebrow'
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('home')}
+          >
+            Murtaza&apos;s Sandbox
+          </p>
           <nav className='nav-links'>
-            <button type='button' onClick={() => goHomeAndScroll('about')}>
+            <button type='button' className={view === 'home' ? 'active' : ''} onClick={() => navigate('home')}>
               About
             </button>
-            <button type='button' onClick={() => goHomeAndScroll('projects')}>
+            <button type='button' className={view === 'projects' || view === 'project-post' ? 'active' : ''} onClick={() => navigate('projects')}>
               Projects
             </button>
-            <button type='button' onClick={() => goHomeAndScroll('blog')}>
+            <button type='button' className={view === 'blog' || view === 'blog-post' ? 'active' : ''} onClick={() => navigate('blog')}>
               Blog
             </button>
           </nav>
@@ -134,89 +139,85 @@ export default function App() {
       </header>
 
       <main>
-        {view === 'blog' ? (
-          <section className='panel blog-panel'>
-            <button
-              type='button'
-              className='text-link'
-              onClick={() => setView('home')}
-            >
-              ← Back
-            </button>
+        {view === 'home' && (
+          <section id='about' className='panel'>
+            <h1>About Me</h1>
+            <p>
+              Hi, I&apos;m Murtaza, a final-year Computer Science (Honours)
+              undergraduate student at UNSW Sydney. I enjoy learning about
+              machine learning and maths, and I love building projects.
+              Outside of study, I like travelling, reading, and playing
+              tennis.
+            </p>
 
-            {activePost ? <activePost.Component /> : null}
+            <div className='link-row'>
+              {socialLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.url}
+                  target='_blank'
+                  rel='noreferrer'
+                >
+                  {link.icon ? (
+                    <img
+                      src={link.icon}
+                      alt=''
+                      className='link-icon'
+                      aria-hidden='true'
+                    />
+                  ) : null}
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </section>
-        ) : (
-          <>
-            <section id='about' className='panel'>
-              <h1>About Me</h1>
-              <p>
-                Hi, I&apos;m Murtaza, a final-year Computer Science (Honours)
-                undergraduate student at UNSW Sydney. I enjoy learning about
-                machine learning and maths, and I love building projects.
-                Outside of study, I like travelling, reading, and playing
-                tennis.
-              </p>
+        )}
 
-              <div className='link-row'>
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.url}
-                    target='_blank'
-                    rel='noreferrer'
-                  >
-                    {link.icon ? (
-                      <img
-                        src={link.icon}
-                        alt=''
-                        className='link-icon'
-                        aria-hidden='true'
-                      />
-                    ) : null}
-                    {link.label}
-                  </a>
-                ))}
-              </div>
-            </section>
+        {view === 'projects' && (
+          <section id='projects' className='panel'>
+            <div className='section-head'>
+              <h2>Projects</h2>
+            </div>
+            <div className='blog-list projects-list'>
+              {projects.map((project) => {
+                const isInternal = !!project.Component;
 
-            <section id='projects' className='panel'>
-              <div className='section-head'>
-                <h2>Projects</h2>
-              </div>
-              <div className='blog-list projects-list'>
-                {projects.map((project) => (
+                return (
                   <div
                     key={project.title}
                     className='blog-list-item project-card'
-                    role={project.clickUrl ? 'link' : undefined}
-                    tabIndex={project.clickUrl ? 0 : undefined}
+                    role='link'
+                    tabIndex={0}
                     onClick={() => {
-                      if (!project.clickUrl) return;
-                      window.open(project.clickUrl, '_blank', 'noreferrer');
+                      if (isInternal) {
+                        openProject(project.id);
+                      } else if (project.clickUrl) {
+                        window.open(project.clickUrl, '_blank', 'noreferrer');
+                      }
                     }}
                     onKeyDown={(event) => {
-                      if (!project.clickUrl) return;
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
-                        window.open(project.clickUrl, '_blank', 'noreferrer');
+                        if (isInternal) {
+                          openProject(project.id);
+                        } else if (project.clickUrl) {
+                          window.open(project.clickUrl, '_blank', 'noreferrer');
+                        }
                       }
                     }}
                   >
                     <div className='project-row'>
-                      <a
-                        className='project-link'
-                        href={project.url}
-                        target='_blank'
-                        rel='noreferrer'
-                      >
-                        <div className='blog-list-title'>{project.title}</div>
+                      <div className='project-link'>
+                        <div className='blog-list-title'>
+                          {project.title}
+                          {isInternal ? <span className='blog-list-arrow'>→</span> : null}
+                        </div>
                         {project.description ? (
                           <div className='blog-list-desc'>
                             {project.description}
                           </div>
                         ) : null}
-                      </a>
+                      </div>
                       {project.githubUrl ? (
                         <a
                           className='project-icon-link'
@@ -224,6 +225,7 @@ export default function App() {
                           target='_blank'
                           rel='noreferrer'
                           aria-label={`${project.title} GitHub`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <img
                             src={project.icon}
@@ -235,34 +237,64 @@ export default function App() {
                       ) : null}
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-            <section id='blog' className='panel'>
-              <div className='section-head'>
-                <h2>Blog</h2>
-              </div>
+        {view === 'blog' && (
+          <section id='blog' className='panel'>
+            <div className='section-head'>
+              <h2>Blog</h2>
+            </div>
 
-              <div className='blog-list'>
-                {blogPosts.map((post) => (
-                  <button
-                    key={post.id}
-                    type='button'
-                    className='blog-list-item'
-                    onClick={() => openPost(post.id)}
-                  >
-                    <div className='blog-list-title'>
-                      {post.title} <span className='blog-list-arrow'>→</span>
-                    </div>
-                    {post.description ? (
-                      <div className='blog-list-desc'>{post.description}</div>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
+            <div className='blog-list'>
+              {blogPosts.map((post) => (
+                <button
+                  key={post.id}
+                  type='button'
+                  className='blog-list-item'
+                  onClick={() => openPost(post.id)}
+                >
+                  <div className='blog-list-title'>
+                    {post.title} <span className='blog-list-arrow'>→</span>
+                  </div>
+                  {post.description ? (
+                    <div className='blog-list-desc'>{post.description}</div>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {view === 'blog-post' && (
+          <section className='panel blog-panel'>
+            <button
+              type='button'
+              className='text-link'
+              onClick={() => navigate('blog')}
+            >
+              ← Back
+            </button>
+
+            {activePost ? <activePost.Component /> : null}
+          </section>
+        )}
+
+        {view === 'project-post' && activeProject && (
+          <section className='panel blog-panel'>
+            <button
+              type='button'
+              className='text-link'
+              onClick={() => navigate('projects')}
+            >
+              ← Back
+            </button>
+
+            <activeProject.Component />
+          </section>
         )}
       </main>
 
