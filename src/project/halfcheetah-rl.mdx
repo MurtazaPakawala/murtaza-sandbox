@@ -1,0 +1,134 @@
+import biasVarianceImg from '../images/bias-variance.png';
+import MCVarianceDemo from '../components/MCVarianceDemo';
+import randomPolicyGif from './halfcheeta-assets/random_policy.gif';
+import halfcheetahMcGif from './halfcheeta-assets/halfcheetah-mc.gif';
+
+# Making HalfCheetah Run: Looking at Different Variations of RL Methods
+
+## Introduction
+
+In this project, I explore how different reward estimation methods influence policy learning in reinforcement learning. I start with Monte Carlo methods, then move to Temporal Difference (TD) learning, and finally to Generalised Advantage Estimation (GAE) in Proximal Policy Optimisation (PPO). 
+ The motivation is simpl in policy optimisation, a major challenge is deciding how to estimate whether an action was actually good. Monte Carlo methods use the full return from a trajectory, TD learning bootstraps from value estimates and GAE combines these two ideas in a way.
+The goal was to see how they affect learning in PPO and how they change the behaviour of the agent in the HalfCheetah environment.
+
+## PPO (A breif Overview 🤔)
+
+The main objective in reinforcement learning is to learn a policy that selects actions leading to high long-term reward. PPO is a policy gradient method designed to do this in a stable and efficient way.
+
+At the core of policy gradient methods is the idea that actions with positive advantage should become more likely, and actions with negative advantage should become less likely. The advantage function is defined as
+
+$$
+A(s, a) = Q(s, a) - V(s)
+$$
+
+and measures how much better an action is compared to the policy’s average behaviour at a given state.
+
+A useful way to think about the policy objective is:
+
+$$
+\text{objective} \propto \pi_\theta(a \mid s)\, A(s, a)
+$$
+
+This captures the intuition, but PPO uses a more practical surrogate objective based on the ratio between the new policy and the old policy that generated the data:
+
+$$
+r_t(\theta) = \frac{\pi_\theta(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}
+$$
+
+$$
+L(\theta) = \mathbb{E}\left[r_t(\theta)\hat{A}_t\right]
+$$
+
+This lets us update the current policy while still using samples collected from the previous version of it. PPO is on-policy or may be in between, since the data comes from the current policy rollout, but it stabilises optimisation by comparing against the old policy.
+
+To avoid overly large policy updates, PPO introduces clipping:
+
+$$
+L^{\text{CLIP}}(\theta) =
+\mathbb{E}\left[
+\min\left(
+r_t(\theta)\hat{A}_t,\;
+\text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)\hat{A}_t
+\right)
+\right]
+$$
+
+The clipping prevents the new policy from drifting too far from the old one in a single step (something like KL divergence can be used too), which is one of the reasons PPO works so well in practice.
+
+A key remaining question is how we estimate the advantage $\hat{A}_t$. That is where Monte Carlo returns, TD targets, and GAE come in. These choices determine the signal used to update the policy, and in this project I wanted to compare them to understand how they affect training and the final behaviour of the cheetah!!
+
+
+## Bias–Variance Tradeoff
+
+Before going deeper into advantage estimation, it is useful to briefly recall the general idea of the bias–variance tradeoff in machine learning.
+
+<div style={{ display: "flex", justifyContent: "center", margin: "1.5rem 0" }}>
+  <img
+    src={biasVarianceImg}
+    alt="Bias variance tradeoff target diagram showing low and high bias and variance"
+    style={{ maxWidth: "350px", width: "100%", borderRadius: "12px" }}
+  />
+</div>
+
+Bias refers to how systematically wrong a model’s predictions are. A high-bias model makes strong assumptions and may consistently miss the true target. Variance refers to how sensitive a model is to changes in the data. A high-variance model may fit one dataset very well, but behave very differently on another.
+
+The figure above gives an intuitive picture. Low bias means predictions are centred around the true target, while high bias means they are consistently shifted away from it. Low variance means predictions are tightly grouped, while high variance means they are scattered.
+
+For a much better and more detailed explanation, I highly recommend this [CS229 lecture](https://www.youtube.com/watch?v=XhyOAX6oSX4&t=5648s). I found it excellent when I was learning this topic.
+
+## Monte Carlo Value Estimation
+
+In my implementation, the value function $V_\phi(s)$ is represented by a neural network. For each state in a trajectory, I compute the Monte Carlo return by summing all future discounted rewards:
+
+$$
+G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \dots
+$$
+
+This full return acts as the training target for the value network. The network is trained using mean squared error:
+
+$$
+\mathcal{L}_{\text{value}} = \bigl(V_\phi(s_t) - G_t\bigr)^2
+$$
+
+So the critic is learning in a purely Monte Carlo way: for each state, it tries to predict the total discounted reward that was actually observed from that point onward in the trajectory.
+
+Because the loss is MSE, the learned value $V_\phi(S)$ is pushed toward the average of the sampled returns observed from that state. In other words, it is trying to approximate the expected return:
+
+$$
+V^\pi(S) = \mathbb{E}_\pi[G_t \mid S_t = S]
+$$
+
+This is also why Monte Carlo methods have high variance. Even when starting from the same state $S$, different sampled trajectories can lead to very different final outcomes. One rollout may produce a large positive return, while another may end much worse. As a result, the Monte Carlo target $G_t$ can vary significantly across samples, making the critic’s learning signal noisy.
+
+Once the value function has been learned, it can be used to compute the advantage:
+
+$$
+\hat{A}_t = G_t - V_\phi(s_t)
+$$
+
+This advantage measures how much better or worse the observed outcome was compared to what the critic expected. If the realised return is larger than the predicted value, the advantage is positive; if it is smaller, the advantage is negative. The policy is then updated using this advantage signal.
+
+<MCVarianceDemo/>
+
+<figcaption>
+From the same state $S$, different sampled trajectories can produce very different Monte Carlo returns, illustrating the high variance of the target. With more sampled trajectories, the estimate of $V(S)$ becomes more stable, but the individual returns can still fluctuate significantly (also here in the visualization is just doing simple policy rollout but during training, the policy changes, so the return distribution changes as well)
+</figcaption>
+
+<div style={{ display: "flex", gap: "1rem", justifyContent: "center", margin: "1.5rem 0", flexWrap: "wrap" }}>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={randomPolicyGif}
+      alt="HalfCheetah with random policy"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>Random Policy</p>
+  </div>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={halfcheetahMcGif}
+      alt="HalfCheetah trained with Monte Carlo returns"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>PPO with Monte Carlo Returns</p>
+  </div>
+</div>
