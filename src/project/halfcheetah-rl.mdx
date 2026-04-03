@@ -1,7 +1,11 @@
 import biasVarianceImg from '../images/bias-variance.png';
 import MCVarianceDemo from '../components/MCVarianceDemo';
+import TDBiasDemo from '../components/TDBiasDemo';
 import randomPolicyGif from './halfcheeta-assets/random_policy.gif';
 import halfcheetahMcGif from './halfcheeta-assets/halfcheetah-mc.gif';
+import rewardMcImg from './halfcheeta-assets/reward_mc.png';
+import halfcheetahTdGif from './halfcheeta-assets/halfcheetah-td.gif';
+import returnsTdImg from './halfcheeta-assets/returns_td.png';
 
 # Making HalfCheetah Run: Looking at Different Variations of RL Methods
 
@@ -132,3 +136,67 @@ From the same state $S$, different sampled trajectories can produce very differe
     <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>PPO with Monte Carlo Returns</p>
   </div>
 </div>
+
+
+In the comparative GIF, we can see that with the random policy, the cheetah has not learned any useful behaviour and simply takes random actions. With Monte Carlo PPO, however, it has already learned the basic objective of the environment moving forward.
+<div style={{ display: "flex", justifyContent: "center", margin: "1.5rem 0" }}>
+  <img
+    src={rewardMcImg}
+    alt="Reward curve for Monte Carlo PPO training"
+    style={{ maxWidth: "500px", width: "100%", borderRadius: "12px" }}
+  />
+</div>
+
+Since Monte Carlo uses the full return from the trajectory as the learning signal, the reward curve does increase over training, showing that the policy is improving. At the same time, the learning is relatively slow, and the final return reaches only around 500. Compared to TD and GAE, which we will look at next, Monte Carlo achieves weaker final performance.
+
+
+## Temporal Difference (TD) Value Estimation
+
+Unlike Monte Carlo methods, Temporal Difference (TD) learning does not wait until the end of the trajectory to compute the full return. Instead, it updates the value function using the immediate reward together with the critic’s current estimate of the next state (this idea is known as bootstrapping).
+
+In the simplest one-step TD setting, the target is:
+
+$$
+y_t = r_t + \gamma V_\phi(s_{t+1})
+$$
+
+and the value network is trained using mean squared error:
+
+$$
+\mathcal{L}_{\text{value}} = \bigl(V_\phi(s_t) - y_t\bigr)^2
+$$
+
+So rather than learning from the full realised return of the trajectory, the critic learns from a target that is partly observed and partly estimated. The reward $r_t$ is real, but the term $V_\phi(s_{t+1})$ is the critic’s own prediction of future return.
+
+<TDBiasDemo />
+
+In the visualization, many trajectories pass through state $S$. If our current guess for $V(S)$ is poor, then any earlier state that uses $V(S)$ as part of its target will inherit some of that error. This is the source of **bias** in TD learning the target itself is built from an estimate, not from the true return.
+
+At the beginning, this can make TD updates systematically too high or too low depending on the initial guess of $V(S)$. However, as more trajectories pass through $S$, the estimate $V(S)$ improves. Once $V(S)$ becomes more accurate, all predecessor states can use that improved estimate immediately. This is the key advantage of bootstrapping information learned at one state quickly propagates backward through the state space.
+So TD learning trades off two things It introduces bias early because it learns from its own current predictions, but it also becomes data-efficient because it does not need to wait until the end of every trajectory to learn something useful.
+
+<div style={{ display: "flex", gap: "1rem", justifyContent: "center", margin: "1.5rem 0", flexWrap: "wrap" }}>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={halfcheetahTdGif}
+      alt="HalfCheetah trained with TD returns"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>PPO with TD Returns</p>
+  </div>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={returnsTdImg}
+      alt="Reward curve for TD PPO training"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>TD Episode Returns</p>
+  </div>
+</div>
+
+
+TD climbs to roughly **2000** at its best. This suggests that TD is learning a useful value estimate much faster and using it to improve the policy more effectively, also the cheetah seems to move forward very quickly, but with an unusual bent posture. This may indicate that the policy has discovered a high-reward movement pattern that is effective for the task, even if it looks unnatural. In reinforcement learning, agents often exploit the reward function in ways that maximize return without necessarily producing realistic motion.
+
+
+
+
