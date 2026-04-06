@@ -6,6 +6,8 @@ import halfcheetahMcGif from './halfcheeta-assets/halfcheetah-mc.gif';
 import rewardMcImg from './halfcheeta-assets/reward_mc.png';
 import halfcheetahTdGif from './halfcheeta-assets/halfcheetah-td.gif';
 import returnsTdImg from './halfcheeta-assets/returns_td.png';
+import halfcheetahGaeGif from './halfcheeta-assets/halfcheetah-gae.gif';
+import rewardGaeImg from './halfcheeta-assets/reward_gae.png';
 
 # Making HalfCheetah Run: Looking at Different Variations of RL Methods
 
@@ -199,4 +201,51 @@ TD climbs to roughly **2000** at its best. This suggests that TD is learning a u
 
 
 
+
+## Generalized Advantage Estimation (GAE)
+
+In Monte Carlo methods, the advantage is computed using the full trajectory return, so the estimate uses complete future information but often has high variance. In TD methods, we instead use a bootstrapped one-step estimate, which is more efficient but introduces bias because it depends on the critic’s current value estimate.
+GAE combines these two ideas. Instead of using only the full return or only the one-step TD error, it builds the advantage by summing multiple future TD errors with exponentially decaying weights:
+
+$$
+\delta_t = r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
+$$
+
+and
+
+$$
+\hat{A}_t^{\mathrm{GAE}(\gamma,\lambda)}
+=
+\delta_t + (\gamma\lambda)\delta_{t+1} + (\gamma\lambda)^2\delta_{t+2} + \cdots
+$$
+
+<div style={{ display: "flex", gap: "1rem", justifyContent: "center", margin: "1.5rem 0", flexWrap: "wrap" }}>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={halfcheetahGaeGif}
+      alt="HalfCheetah trained with GAE"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>PPO with GAE</p>
+  </div>
+  <div style={{ flex: "1 1 45%", minWidth: "250px", textAlign: "center" }}>
+    <img
+      src={rewardGaeImg}
+      alt="Reward curve for GAE PPO training"
+      style={{ width: "100%", borderRadius: "12px" }}
+    />
+    <p style={{ fontSize: "0.85rem", marginTop: "0.5rem" }}>GAE Episode Returns</p>
+  </div>
+</div>
+
+GAE can be understood as a middle ground between Monte Carlo and Temporal Difference learning. When $\lambda$ is small, it behaves more like TD, relying more heavily on bootstrapped estimates. When $\lambda$ is close to $1$, it becomes more similar to Monte Carlo, using longer-horizon information from the trajectory. This makes GAE especially useful because it provides a stronger bias-variance trade-off than either extreme on its own.
+This balance is also reflected in the cheetah experiment above the cheetah not only runs quickly, but does so in a controlled and consistent way.
+
+The reward curve tells a similar story. Unlike TD, whose improvement is more gradual, the GAE reward rises steeply and even surpasses TD partway through training. This suggests that GAE is helping the agent learn better actions more efficiently, leading to both faster improvement and stronger overall behaviour.
+
+
+## References
+
+- Stanford CS224R (Spring 2025) — Off-policy Actor-Critic (Lecture 05): [slides (PDF)](https://cs224r.stanford.edu/spring_2025/slides/05_cs224r_offpolicy_actor_critic_2025.pdf)
+- Stanford CS229 — Lecture notes (Section 8: Bias/Variance): [main notes (PDF)](https://cs229.stanford.edu/main_notes.pdf)
 

@@ -10,7 +10,7 @@ import thesisPdf from './files/thesis.pdf';
 
 const blogPosts = [
   {
-    id: 'Linear-Regression',
+    id: 'Linear-Regression', 
     title: 'Understanding Regression',
     description: '14 December 2025',
     Component: UnivariateRegressionBlog,
