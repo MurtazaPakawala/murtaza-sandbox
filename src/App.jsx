@@ -58,6 +58,8 @@ export default function App() {
       title: 'Making HalfCheetah Run',
       description: 'Looking at different variations of RL methods.',
       Component: HalfCheetahRL,
+      githubUrl: 'https://github.com/MurtazaPakawala/HalfCheetah-',
+      icon: githubIcon,
     },
     {
       title: 'Research Thesis',
